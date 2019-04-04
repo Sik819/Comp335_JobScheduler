@@ -1,5 +1,3 @@
-package vanilla_client;
-
 import java.util.ArrayList;
 
 public class Job extends ArrayList<String>{
