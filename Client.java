@@ -22,6 +22,7 @@ public class Client extends Job {
     ArrayList<Job> listJOB = new ArrayList<>();
     Job currentJob = new Job();
     static Parser p = new Parser();
+    Socket socket =  null;
 
     //make byte array
     public byte[] sendToServer(String s)
@@ -63,6 +64,17 @@ public class Client extends Job {
 //		}
         return line;
     }
+    
+    //schedule the job
+    public void scheduleJob(PrintStream p, Socket s, Job j) throws UnsupportedEncodingException, IOException
+    {
+    	p.write(sendToServer("SCHD "+j.get(2)+" 4xlarge 0"));
+        if (readLine(s).contains("OK"))
+        {
+            j.jobDone();
+        }
+    }
+    //getting job IDs
     public Job seperateStrings(Job j , String s){
         if(s.length()<=1)
             return j;
@@ -73,11 +85,20 @@ public class Client extends Job {
         j.add(s.substring(0,s.indexOf(' ')));
         return  seperateStrings(j,s.substring(s.indexOf(' ')+1));
     }
-
-
-    Socket socket =  null;
-
-
+    
+    //send ok until .
+    public void okSender(PrintStream send, String reply) throws IOException {
+    	while(true)
+        {
+            send.write(sendToServer("OK"));
+            reply = readLine(socket);
+            if(reply.equals("."))
+            {
+                break;
+            }
+        }
+    	
+    }
 
     //constructor
     public Client(String ip, int port) throws UnknownHostException, IOException
@@ -105,37 +126,35 @@ public class Client extends Job {
             }
         }
         send.write(sendToServer("RESC Type 4xlarge"));
-        String reply = readLine(socket);
-        
-        
-        okSender(send, reply);
+        String reply = readLine(socket); //get server info
+        okSender(send, reply);  //get all server info
         System.out.println("Job(s) :"+currentJob);
+        //do the scheduling
         send.write(sendToServer("SCHD "+currentJob.get(2)+" 4xlarge 0"));
-        if (readLine(socket).contains("OK"))
+        scheduleJob( send, socket, currentJob);
+        while(true)
         {
-            currentJob.jobDone();
+        	send.write(sendToServer("REDY"));
+        	String str = readLine(socket);
+        	if(str.contains("JOBN"))
+        	{
+        		send.write(sendToServer("RESC Type 4xlarge"));
+        		readLine(socket);
+        		okSender(send, reply);
+        		scheduleJob( send, socket, currentJob);
+        		
+        	}
+        	if(str.equals("NONE"))
+        	{
+        		System.out.println("Connection closing");
+        		System.out.println("-----------------------------");
+        		break;
+        	}
         }
 
 
         socket.close();
-
-
-
-
-    }
-    
-    public void okSender(PrintStream send, String reply) throws IOException {
-    	while(true)
-        {
-            send.write(sendToServer("OK"));
-            reply = readLine(socket);
-            if(reply.equals("."))
-            {
-                break;
-            }
-        }
-    	
-    }
+}
     public static void main(String[] args) throws UnknownHostException, IOException {
         if(args.length!=1)
             throw new RuntimeException("Enter file path of your server");
