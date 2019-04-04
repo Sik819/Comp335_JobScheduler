@@ -152,7 +152,7 @@ public class Client extends Job {
         	}
         }
 
-
+        send.write(sendToServer("QUIT"));
         socket.close();
 }
     public static void main(String[] args) throws UnknownHostException, IOException {
