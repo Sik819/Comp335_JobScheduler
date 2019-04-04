@@ -1,4 +1,3 @@
-package vanilla_client;
 import java.awt.List;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -99,7 +98,7 @@ public class Client extends Job {
             String reply = readLine(socket);
             if(s.equalsIgnoreCase("AUTH USER") && reply.equalsIgnoreCase(("OK"))) {
                 try {
-                    p.main();
+                    p.parse();
                 } catch (ParserConfigurationException | SAXException e) {
                     e.printStackTrace();
                 }
@@ -131,8 +130,11 @@ public class Client extends Job {
 
     }
     public static void main(String[] args) throws UnknownHostException, IOException {
+        if(args.length!=1)
+            throw new RuntimeException("Enter file path of your server");
+        else
+            p = new Parser(args);
         Client cl = new Client("127.0.0.1", 8096);
-        p = new Parser(args);
 
     }
 }
