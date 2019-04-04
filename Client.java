@@ -106,15 +106,9 @@ public class Client extends Job {
         }
         send.write(sendToServer("RESC Type 4xlarge"));
         String reply = readLine(socket);
-        while(true)
-        {
-            send.write(sendToServer("OK"));
-            reply = readLine(socket);
-            if(reply.equals("."))
-            {
-                break;
-            }
-        }
+        
+        
+        okSender(send, reply);
         System.out.println("Job(s) :"+currentJob);
         send.write(sendToServer("SCHD "+currentJob.get(2)+" 4xlarge 0"));
         if (readLine(socket).contains("OK"))
@@ -128,6 +122,19 @@ public class Client extends Job {
 
 
 
+    }
+    
+    public void okSender(PrintStream send, String reply) throws IOException {
+    	while(true)
+        {
+            send.write(sendToServer("OK"));
+            reply = readLine(socket);
+            if(reply.equals("."))
+            {
+                break;
+            }
+        }
+    	
     }
     public static void main(String[] args) throws UnknownHostException, IOException {
         if(args.length!=1)
