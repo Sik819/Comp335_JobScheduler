@@ -142,18 +142,18 @@ public class Client extends Job {
         		readLine(socket);
         		okSender(send, reply);
         		scheduleJob( send, socket, currentJob);
-        		
         	}
         	if(str.equals("NONE"))
         	{
-        		System.out.println("Connection closing");
-        		System.out.println("-----------------------------");
         		break;
         	}
         }
-
-
+        send.write(sendToServer("QUIT"));
+		System.out.println("Connection closing");
+		System.out.println("-----------------------------");
         socket.close();
+        send.close();
+        
 }
     public static void main(String[] args) throws UnknownHostException, IOException {
         if(args.length!=1)
