@@ -1,3 +1,4 @@
+package vanilla_client;
 import java.awt.List;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -12,11 +13,16 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
 
 import java.io.BufferedReader;
 
 public class Client extends Job {
     ArrayList<Job> listJOB = new ArrayList<>();
+    Job currentJob = new Job();
+    static Parser p = new Parser();
 
     //make byte array
     public byte[] sendToServer(String s)
@@ -37,6 +43,7 @@ public class Client extends Job {
         if(line.contains(("JOBN"))) {
             seperateStrings(j, line);
             listJOB.add(j);
+            currentJob = j;
         }
 
         //		if(line.contains("JOBN"))
@@ -64,13 +71,13 @@ public class Client extends Job {
             j.add(s);
             return j;
         }
-            j.add(s.substring(0,s.indexOf(' ')));
+        j.add(s.substring(0,s.indexOf(' ')));
         return  seperateStrings(j,s.substring(s.indexOf(' ')+1));
     }
 
 
     Socket socket =  null;
-    Job newJob = new Job();
+
 
 
     //constructor
@@ -89,7 +96,15 @@ public class Client extends Job {
         {
             send.write(sendToServer(s));
             System.out.println("Sending "+s);
-            String reply = readLine(socket);}
+            String reply = readLine(socket);
+            if(s.equalsIgnoreCase("AUTH USER") && reply.equalsIgnoreCase(("OK"))) {
+                try {
+                    p.main();
+                } catch (ParserConfigurationException | SAXException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
         send.write(sendToServer("RESC Type 4xlarge"));
         String reply = readLine(socket);
         while(true)
@@ -101,9 +116,12 @@ public class Client extends Job {
                 break;
             }
         }
-        System.out.println(listJOB.get(0));
-        System.out.println(listJOB.get(0).get(1));
-        send.write(sendToServer("SCHD "+listJOB.get(0).get(2)+" 4xlarge 0"));
+        System.out.println("Job(s) :"+currentJob);
+        send.write(sendToServer("SCHD "+currentJob.get(2)+" 4xlarge 0"));
+        if (readLine(socket).contains("OK"))
+        {
+            currentJob.jobDone();
+        }
 
 
         socket.close();
@@ -114,6 +132,7 @@ public class Client extends Job {
     }
     public static void main(String[] args) throws UnknownHostException, IOException {
         Client cl = new Client("127.0.0.1", 8096);
+        p = new Parser(args);
 
     }
 }
