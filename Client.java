@@ -66,9 +66,9 @@ public class Client extends Job {
     }
     
     //schedule the job
-    public void scheduleJob(PrintStream p, Socket s, Job j) throws UnsupportedEncodingException, IOException
+    public void scheduleJob(PrintStream pr, Socket s, Job j, Parser par) throws UnsupportedEncodingException, IOException
     {
-    	p.write(sendToServer("SCHD "+j.get(2)+" 4xlarge 0"));
+    	pr.write(sendToServer("SCHD "+j.get(2)+" "+par.listServers.getLargest()+" 0"));
         if (readLine(s).contains("OK"))
         {
             j.jobDone();
@@ -125,23 +125,23 @@ public class Client extends Job {
                 }
             }
         }
-        send.write(sendToServer("RESC Type 4xlarge"));
+        send.write(sendToServer("RESC All"));
         String reply = readLine(socket); //get server info
         okSender(send, reply);  //get all server info
         System.out.println("Job(s) :"+currentJob);
         //do the scheduling
-        send.write(sendToServer("SCHD "+currentJob.get(2)+" 4xlarge 0"));
-        scheduleJob( send, socket, currentJob);
+        send.write(sendToServer("SCHD "+currentJob.get(2)+" "+p.listServers.getLargest()+" 0"));
+        //scheduleJob(send, socket, currentJob, p);
         while(true)
         {
         	send.write(sendToServer("REDY"));
         	String str = readLine(socket);
         	if(str.contains("JOBN"))
         	{
-        		send.write(sendToServer("RESC Type 4xlarge"));
+        		send.write(sendToServer("RESC All"));
         		readLine(socket);
         		okSender(send, reply);
-        		scheduleJob( send, socket, currentJob);
+        		scheduleJob( send, socket, currentJob, p);
         	}
         	if(str.equals("NONE"))
         	{

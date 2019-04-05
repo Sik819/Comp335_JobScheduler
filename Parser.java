@@ -15,6 +15,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class Parser {
+	AllServers listServers = new AllServers();
     static String[] args;
 
     public Parser() {
@@ -46,12 +47,19 @@ public class Parser {
                 Element server = (Element) ho.item(j);
                 String type = server.getAttribute("type");
                 String limit = server.getAttribute("limit");
+                int l = Integer.parseInt(limit);
                 String bootupTime = server.getAttribute("bootupTime");
+                int b = Integer.parseInt(bootupTime);
                 String rate = server.getAttribute("rate");
+                float r = Float.parseFloat(rate);
                 String coreCount = server.getAttribute("coreCount");
+                int c = Integer.parseInt(coreCount);
                 String memory = server.getAttribute("memory");
+                int m = Integer.parseInt(memory);
                 String disk = server.getAttribute("disk");
-                System.out.println(" Server Type: " + type + " Limit: " + limit + " BootupTime: " + bootupTime + " rate: " + rate + " CoreCount: "+ coreCount + " Memory: "+ memory + " Disk: " + disk );
+                int d = Integer.parseInt(disk);
+                listServers.addIfNotExist(type, l, b, r, c, m, d);
+                //System.out.println(" Server Type: " + type + " Limit: " + limit + " BootupTime: " + bootupTime + " rate: " + rate + " CoreCount: "+ coreCount + " Memory: "+ memory + " Disk: " + disk );
             }
         }
     }
