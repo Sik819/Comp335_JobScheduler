@@ -19,9 +19,10 @@ import org.xml.sax.SAXException;
 import java.io.BufferedReader;
 
 public class Client extends Job {
+	String temp1 = "";
     ArrayList<Job> listJOB = new ArrayList<>();
     Job currentJob = new Job();
-    static Parser p = new Parser();
+ //   static Parser p = new Parser();
     Socket socket =  null;
 
     //make byte array
@@ -38,7 +39,7 @@ public class Client extends Job {
         Job j = new Job();
         BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream(), "UTF-8"));//receive buffer
         String line = input.readLine();
-        System.out.println("Received "+line);
+//        System.out.println("Received "+line);
 
         if(line.contains(("JOBN"))) {
             seperateStrings(j, line);
@@ -66,9 +67,9 @@ public class Client extends Job {
     }
     
     //schedule the job
-    public void scheduleJob(PrintStream pr, Socket s, Job j, Parser par) throws UnsupportedEncodingException, IOException
+    public void scheduleJob(PrintStream pr, Socket s, Job j) throws UnsupportedEncodingException, IOException //add parser par
     {
-    	pr.write(sendToServer("SCHD "+j.get(2)+" "+par.listServers.getLargest()+" 0"));
+    	pr.write(sendToServer("SCHD "+j.get(2)+" "+temp1+" 0"));
         if (readLine(s).contains("OK"))
         {
             j.jobDone();
@@ -88,12 +89,16 @@ public class Client extends Job {
     
     //send ok until .
     public void okSender(PrintStream send, String reply) throws IOException {
+    	ArrayList<String> check = new ArrayList<>();
     	while(true)
         {
             send.write(sendToServer("OK"));
             reply = readLine(socket);
+            check.add(reply);
             if(reply.equals("."))
             {
+            	String temp = check.get(check.size()-2);
+            	temp1 = temp.substring(0, temp.indexOf(" "));
                 break;
             }
         }
@@ -117,20 +122,20 @@ public class Client extends Job {
             send.write(sendToServer(s));
             System.out.println("Sending "+s);
             String reply = readLine(socket);
-            if(s.equalsIgnoreCase("AUTH USER") && reply.equalsIgnoreCase(("OK"))) {
-                try {
-                    p.parse();
-                } catch (ParserConfigurationException | SAXException e) {
-                    e.printStackTrace();
-                }
-            }
+//            if(s.equalsIgnoreCase("AUTH USER") && reply.equalsIgnoreCase(("OK"))) {
+//                try {
+//                    p.parse();
+//                } catch (ParserConfigurationException | SAXException e) {
+//                    e.printStackTrace();
+//                }
+//            }
         }
         send.write(sendToServer("RESC All"));
         String reply = readLine(socket); //get server info
         okSender(send, reply);  //get all server info
         System.out.println("Job(s) :"+currentJob);
         //do the scheduling
-        send.write(sendToServer("SCHD "+currentJob.get(2)+" "+p.listServers.getLargest()+" 0"));
+        send.write(sendToServer("SCHD "+currentJob.get(2)+" "+temp1+" 0"));
         //scheduleJob(send, socket, currentJob, p);
         while(true)
         {
@@ -141,7 +146,7 @@ public class Client extends Job {
         		send.write(sendToServer("RESC All"));
         		readLine(socket);
         		okSender(send, reply);
-        		scheduleJob( send, socket, currentJob, p);
+        		scheduleJob( send, socket, currentJob);
         	}
         	if(str.equals("NONE"))
         	{
@@ -156,10 +161,10 @@ public class Client extends Job {
         
 }
     public static void main(String[] args) throws UnknownHostException, IOException {
-        if(args.length!=1)
-            throw new RuntimeException("Enter file path of your server");
-        else
-            p = new Parser(args);
+//        if(args.length!=1)
+//            throw new RuntimeException("Enter file path of your server");
+//        else
+//            p = new Parser(args);
         Client cl = new Client("127.0.0.1", 8096);
 
     }
