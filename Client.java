@@ -22,11 +22,17 @@ public class Client {
 	Socket socket =  null;
 	
 	//job
-    ArrayList<Job> listJOB = new ArrayList<>();
+    ArrayList<Job> listJob = new ArrayList<>();
     Job currentJob = new Job();
     
     //server
     ArrayList<Server> listServer = new ArrayList<>();
+    
+    //get the largest server
+    public String getLargest()
+    {
+    	return listServer.get(listServer.size()-1).serverType;
+    }
 
     //make byte array
     public byte[] sendToServer(String s)
@@ -37,7 +43,7 @@ public class Client {
 
     }
     
-    //read line
+    //reads a message from the server and returns the message as a string
     public String readLine(Socket s) throws UnsupportedEncodingException, IOException
     {
         Job j = new Job();
@@ -46,25 +52,30 @@ public class Client {
 //      System.out.println("Received "+line);
 
         if(line.contains(("JOBN"))) {
-            seperateStrings(j, line);
-            listJOB.add(j);
-            currentJob = j;
+            addJob(line);
         }
         return line;
     }
     
     //schedule the job
-    public void scheduleJob(PrintStream pr, Socket s, Job j) throws UnsupportedEncodingException, IOException //add parser par
+    public void scheduleJob(PrintStream pr, Socket s) throws UnsupportedEncodingException, IOException //add parser par
     {
-    	pr.write(sendToServer("SCHD "+j.get(2)+" "+temp1+" 0"));
+    	String str = listServer.get(listServer.size()-1).serverType; //scheduling to the largest
+    	pr.write(sendToServer("SCHD "+currentJob.jobID+" "+str+" 0"));
         if (readLine(s).contains("OK"))
         {
-            j.jobDone();
+            currentJob.jobDone();
         }
     }
     
     //getting job IDs
-    public Job seperateStrings(Job j , String s){
+    public void addJob(String str){
+    	String[] jobStr = str.split(" ");
+    	Job job = new Job(jobStr);
+    	listJob.add(job);
+    	currentJob = job;
+    			
+    	
 //        if(s.length()<=1)
 //            return j;
 //        if(!s.contains(" ")) {
@@ -76,20 +87,27 @@ public class Client {
     	
     }
     
-    //send ok until .
-    public void okSender(PrintStream send, String reply) throws IOException {
-    	ArrayList<String> check = new ArrayList<>();
+    //send OK until "."
+    public void okSender(PrintStream send) throws IOException {
     	while(true)
         {
-            send.write(sendToServer("OK"));
-            reply = readLine(socket);
-            check.add(reply);
-            if(reply.equals("."))
+        	String serverString = readLine(socket); //get server info or "DATA"
+        	//System.out.println(serverString);
+        	if(serverString.contains("DATA"))
+        	{
+        		send.write(sendToServer("OK"));
+        	}
+        	else if(serverString.equals("."))
             {
-            	String temp = check.get(check.size()-2);
-            	temp1 = temp.substring(0, temp.indexOf(" "));
                 break;
             }
+        	else
+        	{
+            	String[] serverDetails = serverString.split(" ");
+                Server server = new Server(serverDetails);
+                listServer.add(server);
+                send.write(sendToServer("OK"));
+        	}
         }
     	
     }
@@ -111,33 +129,25 @@ public class Client {
             send.write(sendToServer(s));
             System.out.println("Sending "+s);
             String reply = readLine(socket);
-//            if(s.equalsIgnoreCase("AUTH USER") && reply.equalsIgnoreCase(("OK"))) {
-//                try {
-//                    p.parse();
-//                } catch (ParserConfigurationException | SAXException e) {
-//                    e.printStackTrace();
-//                }
-//            }
         }
-        send.write(sendToServer("RESC All"));
-        String reply = readLine(socket); //get server info
-        okSender(send, reply);  //get all server info
-        System.out.println("Job(s) :"+currentJob);
+        
+        System.out.println(currentJob.toString());
+        send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
+        okSender(send);  //get all servers
+        
         //do the scheduling
-        send.write(sendToServer("SCHD "+currentJob.get(2)+" "+temp1+" 0"));
-        //scheduleJob(send, socket, currentJob, p);
+        scheduleJob(send, socket);
         while(true)
         {
         	send.write(sendToServer("REDY"));
         	String str = readLine(socket);
         	if(str.contains("JOBN"))
         	{
-        		send.write(sendToServer("RESC All"));
-        		readLine(socket);
-        		okSender(send, reply);
-        		scheduleJob( send, socket, currentJob);
+        		send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
+        		okSender(send);
+        		scheduleJob(send, socket);
         	}
-        	if(str.equals("NONE"))
+        	else if(str.equals("NONE"))
         	{
         		break;
         	}

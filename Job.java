@@ -27,11 +27,21 @@ public class Job{
     	this.core = Integer.parseInt(arr[4]);
     	this.memory = Integer.parseInt(arr[5]);
     	this.dsk = Integer.parseInt(arr[6]);
-    	this.scheduled = false;
-    	
+    	this.scheduled = false;	
     }
+    
+    public String getJobRESC()
+    {
+    	return this.core+" "+this.memory+" "+this.dsk;
+    }
+    
     public void jobDone()
     {
         this.scheduled = true;
+    }
+    
+    public String toString()
+    {
+    	return "--> Current Job >> id : "+this.jobID+" core : "+this.core+" memory : "+this.memory+" disk : "+this.dsk;
     }
 }
