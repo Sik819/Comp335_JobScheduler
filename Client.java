@@ -18,12 +18,15 @@ import org.xml.sax.SAXException;
 
 import java.io.BufferedReader;
 
-public class Client extends Job {
-	String temp1 = "";
+public class Client {
+	Socket socket =  null;
+	
+	//job
     ArrayList<Job> listJOB = new ArrayList<>();
     Job currentJob = new Job();
- //   static Parser p = new Parser();
-    Socket socket =  null;
+    
+    //server
+    ArrayList<Server> listServer = new ArrayList<>();
 
     //make byte array
     public byte[] sendToServer(String s)
@@ -33,36 +36,20 @@ public class Client extends Job {
         return bytes;
 
     }
+    
     //read line
     public String readLine(Socket s) throws UnsupportedEncodingException, IOException
     {
         Job j = new Job();
         BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream(), "UTF-8"));//receive buffer
         String line = input.readLine();
-//        System.out.println("Received "+line);
+//      System.out.println("Received "+line);
 
         if(line.contains(("JOBN"))) {
             seperateStrings(j, line);
             listJOB.add(j);
             currentJob = j;
         }
-
-        //		if(line.contains("JOBN"))
-//		{
-//			int length = 0;
-//			int begin = 0;
-//			while(length <= line.length())
-//			{
-//				char ch = line.charAt(length);
-//				if(ch == ' ')
-//				{
-//					j.jobAl.add(line.substring(begin, length));
-//				}
-//				length++;
-//				length = begin;
-//			}
-//			return j;
-//		}
         return line;
     }
     
@@ -75,16 +62,18 @@ public class Client extends Job {
             j.jobDone();
         }
     }
+    
     //getting job IDs
     public Job seperateStrings(Job j , String s){
-        if(s.length()<=1)
-            return j;
-        if(!s.contains(" ")) {
-            j.add(s);
-            return j;
-        }
-        j.add(s.substring(0,s.indexOf(' ')));
-        return  seperateStrings(j,s.substring(s.indexOf(' ')+1));
+//        if(s.length()<=1)
+//            return j;
+//        if(!s.contains(" ")) {
+//            j.add(s);
+//            return j;
+//        }
+//        j.add(s.substring(0,s.indexOf(' ')));
+//        return  seperateStrings(j,s.substring(s.indexOf(' ')+1));
+    	
     }
     
     //send ok until .
