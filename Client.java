@@ -10,12 +10,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Scanner;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
-
 import java.io.BufferedReader;
 
 public class Client {
@@ -33,6 +29,27 @@ public class Client {
     {
     	return listServer.get(listServer.size()-1).serverType;
     }
+    
+    //get firsFit
+    public String getFirstFit()
+    {
+    	int counter = 0;
+    	Server temp = listServer.get(0);
+    	for(Server ser : listServer)
+    	{
+    		if(ser.state == 2)
+    			return ser.serverType+" "+ser.serverID;
+    		else if (ser.state == 1)
+    		{
+    			if(counter == 0)
+    			{
+    				temp = ser;
+    			}
+    			counter++;
+    		}
+    	}
+    	return temp.serverType+" "+temp.serverID;
+    }
 
     //make byte array
     public byte[] sendToServer(String s)
@@ -49,22 +66,27 @@ public class Client {
         Job j = new Job();
         BufferedReader input = new BufferedReader(new InputStreamReader(s.getInputStream(), "UTF-8"));//receive buffer
         String line = input.readLine();
-//      System.out.println("Received "+line);
 
         if(line.contains(("JOBN"))) {
             addJob(line);
+            System.out.println(currentJob.toString());
         }
         return line;
     }
     
     //schedule the job
-    public void scheduleJob(PrintStream pr, Socket s) throws UnsupportedEncodingException, IOException //add parser par
+    public void scheduleJob(PrintStream pr, Socket s, Integer useAlg) throws UnsupportedEncodingException, IOException //add parser par
     {
-    	String str = listServer.get(listServer.size()-1).serverType; //scheduling to the largest
-    	pr.write(sendToServer("SCHD "+currentJob.jobID+" "+str+" 0"));
+    	String str = null;
+    	if (useAlg == null || useAlg != 1) //null or not ff
+    		str = listServer.get(listServer.size()-1).serverType+" 0"; //scheduling to the largest
+    	else if (useAlg == 1)
+    		str = getFirstFit();
+    	pr.write(sendToServer("SCHD "+currentJob.jobID+" "+str));
         if (readLine(s).contains("OK"))
         {
             currentJob.jobDone();
+            listServer.clear();
         }
     }
     
@@ -99,6 +121,7 @@ public class Client {
         	}
         	else if(serverString.equals("."))
             {
+        		Collections.sort(listServer, new CompareByCore());
                 break;
             }
         	else
@@ -112,10 +135,15 @@ public class Client {
     	
     }
 
-    //constructor
-    public Client(String ip, int port) throws UnknownHostException, IOException
+    //constructor client
+    
+    public Client(String ip, int port, Integer algNumber) throws UnknownHostException, IOException
     {
         socket = new Socket(ip, port);
+        System.out.println("Connected with server");
+        System.out.println("-----------------------------");
+        System.out.println();
+        
         //BufferedReader rcv = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         PrintStream send = new PrintStream(socket.getOutputStream()); //send message
 
@@ -127,16 +155,14 @@ public class Client {
         for(String s : al)
         {
             send.write(sendToServer(s));
-            System.out.println("Sending "+s);
             String reply = readLine(socket);
         }
-        
-        System.out.println(currentJob.toString());
+
         send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
         okSender(send);  //get all servers
         
         //do the scheduling
-        scheduleJob(send, socket);
+        scheduleJob(send, socket, algNumber);
         while(true)
         {
         	send.write(sendToServer("REDY"));
@@ -145,7 +171,7 @@ public class Client {
         	{
         		send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
         		okSender(send);
-        		scheduleJob(send, socket);
+        		scheduleJob(send, socket, algNumber);
         	}
         	else if(str.equals("NONE"))
         	{
@@ -153,6 +179,8 @@ public class Client {
         	}
         }
         send.write(sendToServer("QUIT"));
+        
+        System.out.println();
 		System.out.println("Connection closing");
 		System.out.println("-----------------------------");
         socket.close();
@@ -160,11 +188,16 @@ public class Client {
         
 }
     public static void main(String[] args) throws UnknownHostException, IOException {
-//        if(args.length!=1)
-//            throw new RuntimeException("Enter file path of your server");
-//        else
-//            p = new Parser(args);
-        Client cl = new Client("127.0.0.1", 8096);
+    	//alg values
+    	//	ff = 1
+    	//	bf = 
+    	//	wf = 
+    	
+    	Integer algorithm = null;
+    	if(args[0].contains("-a") && args[1].contains("ff"))
+    		algorithm = 1;
+
+        Client cl = new Client("127.0.0.1", 8096, algorithm);
 
     }
 }
