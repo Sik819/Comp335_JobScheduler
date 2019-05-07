@@ -28,7 +28,7 @@ public class Client {
     	return listServer.get(listServer.size()-1).serverType;
     }
     
-  //get firsFit
+    //get firsFit
     public String getFirstFit()
     {
     	//using resc all
@@ -50,7 +50,12 @@ public class Client {
     			return ser.serverType+" "+ser.serverID;
     		}
     	}
-    	//not reachable
+    	
+    	//first active server
+    	
+    	//code hasnt been added since resc avail wont return anything with status 3
+    	//may require changing later
+    	
     	return null;
     }
 
@@ -125,7 +130,7 @@ public class Client {
         	}
         	else if(serverString.equals("."))
             {
-        		Collections.sort(listServer, new CompareByCore());
+        		//Collections.sort(listServer, new CompareByCore());
                 break;
             }
         	else
