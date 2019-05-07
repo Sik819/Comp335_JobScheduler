@@ -31,6 +31,13 @@ public class Server{
     	this.core = Integer.parseInt(arr[4]);
     	this.memory = Integer.parseInt(arr[5]);
     	this.dsk = Integer.parseInt(arr[6]);
-    } 
+    }
+    
+    public boolean compareJob(Job j)
+    {
+    	if(j.core <= this.core && j.memory <=this.memory && j.dsk <= this.dsk)
+    		return true;
+    	return false;
+    }
 }
 
