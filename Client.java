@@ -27,6 +27,32 @@ public class Client {
     {
     	return listServer.get(listServer.size()-1).serverType;
     }
+    
+  //get firsFit
+    public String getFirstFit()
+    {
+    	//using resc all
+    	Server temp = null;
+    	boolean firstServer = true;
+    	for(Server ser : listServer)
+    	{
+    		if(ser.compareJob(currentJob))
+    		{
+//    			if(firstServer)
+//    			{
+//    				temp = ser;
+//    				firstServer = false;
+//    			}
+//    			
+//    			String sType = temp.serverType;
+//
+//    			if(ser.serverType == sType && ser.state == 2)
+    			return ser.serverType+" "+ser.serverID;
+    		}
+    	}
+    	//not reachable
+    	return null;
+    }
 
     //make byte array
     public byte[] sendToServer(String s)
@@ -58,7 +84,7 @@ public class Client {
     	if (useAlg == null || useAlg != 1) //null or not ff
     		str = listServer.get(listServer.size()-1).serverType+" 0"; //scheduling to the largest
     	else if (useAlg == 1)
-    		str = "";
+    		str = getFirstFit();
     	pr.write(sendToServer("SCHD "+currentJob.jobID+" "+str));
     	System.out.println(">>> "+currentJob.jobID+" SCHEDULED TO :"+str);
         if (readLine(s).contains("OK"))
