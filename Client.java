@@ -23,6 +23,9 @@ public class Client {
     
     //server
     ArrayList<Server> listServer = new ArrayList<>();
+
+    //initial server state
+    ArrayList<Server> initServer = new ArrayList<>();
     
     //get the largest server
     public String getLargest()
@@ -31,24 +34,61 @@ public class Client {
     }
     
     //get firsFit
-    public String getFirstFit()
+    public String getBestFit()
     {
-    	int counter = 0;
-    	Server temp = listServer.get(0);
-    	for(Server ser : listServer)
-    	{
-    		if(ser.state == 2)
-    			return ser.serverType+" "+ser.serverID;
-    		else if (ser.state == 1)
-    		{
-    			if(counter == 0)
-    			{
-    				temp = ser;
-    			}
-    			counter++;
-    		}
-    	}
-    	return temp.serverType+" "+temp.serverID;
+        int bestFit = Integer.MAX_VALUE;
+        Server bestServer = null;
+        int minAvail = Integer.MAX_VALUE;
+        int fitVal = 0;
+        for(int i = 0; i < listServer.size(); i++) {
+            Server thisServer = listServer.get(i);
+            fitVal = thisServer.core - currentJob.core;
+
+            if(listServer.get(i).compareJob(currentJob) && ((listServer.get(i).state == 3 && listServer.get(i).avbTime == -1) || listServer.get(i).state == 2)) {
+                if (fitVal < bestFit || (fitVal == bestFit && thisServer.avbTime < minAvail)) {
+
+                    bestFit = fitVal;
+                    bestServer = thisServer;
+                    minAvail = bestServer.avbTime;
+
+                }
+            }
+        }
+            if(bestServer!=null)
+            return bestServer.serverType + " " + bestServer.serverID;
+            else {
+                bestServer = getInitServer();
+                if(bestServer!=null)
+                return bestServer.serverType + " " + bestServer.serverID;
+                else
+                    return null;
+            }
+    }
+
+
+    public void getInitState(ArrayList<Server> list)
+    {
+        String lookup = "";
+        for(Server ser : list)
+        {
+            if(!lookup.contains(ser.serverType))
+            {
+                lookup+=ser.serverType;
+                initServer.add(ser);
+            }
+        }
+    }
+
+    public Server getInitServer()
+    {
+        for(Server ser : initServer)
+        {
+            if(ser.compareJob(currentJob))
+            {
+                return ser;
+            }
+        }
+        return null;
     }
 
     //make byte array
@@ -81,7 +121,7 @@ public class Client {
     	if (useAlg == null || useAlg != 1) //null or not ff
     		str = listServer.get(listServer.size()-1).serverType+" 0"; //scheduling to the largest
     	else if (useAlg == 1)
-    		str = getFirstFit();
+    		str = getBestFit();
     	pr.write(sendToServer("SCHD "+currentJob.jobID+" "+str));
         if (readLine(s).contains("OK"))
         {
@@ -171,6 +211,7 @@ public class Client {
         	{
         		send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
         		okSender(send);
+                getInitState(listServer);
         		scheduleJob(send, socket, algNumber);
         	}
         	else if(str.equals("NONE"))
@@ -194,7 +235,7 @@ public class Client {
     	//	wf = 
     	
     	Integer algorithm = null;
-    	if(args[0].contains("-a") && args[1].contains("ff"))
+    	if(args[0].contains("-a") && args[1].contains("bf"))
     		algorithm = 1;
 
         Client cl = new Client("127.0.0.1", 8096, algorithm);
