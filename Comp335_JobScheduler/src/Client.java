@@ -34,15 +34,39 @@ public class Client {
     //get firsFit
     public String WorstFit()
     {
-    	String temp = listServer.get(0).serverType;
-    	int max = listServer.get(0).core;
-    	for(int i = 0; i < listServer.size(); i++){
-    		if(max < listServer.get(i).core){
-    			max = listServer.get(i).core;
-    			temp = listServer.get(i).serverType;
+    	int worstFit = 0;
+    	Server worstServer = null;
+    	int altFit = 0;
+    	Server altServer = null;
+    	int fitVal = 0;
+    	for(int i = 0; i < listServer.size(); i++) {
+    		fitVal = listServer.get(i).core - currentJob.core;
+    		if(fitVal > 0) {
+    			if(listServer.get(i).compareJob(currentJob) && ((listServer.get(i).state == 3 && listServer.get(i).avbTime == -1) || listServer.get(i).state == 2)) {
+    			
+    				if(worstFit < fitVal) {
+    					worstFit = fitVal;
+    					worstServer = listServer.get(i);
+    				}
+    			}
+    			if(listServer.get(i).compareJob(currentJob) && altFit < fitVal) {
+    				altFit = fitVal;
+    				altServer = listServer.get(i);
+    			}
     		}
+    		
     	}
-    	return temp;
+    	if(worstServer != null) {
+    		worstFit = 0;
+    		altFit = 0;
+    		return worstServer.serverType + " " + worstServer.serverID;
+    	}
+    	if(altServer != null) {
+    		worstFit = 0;
+    		altFit = 0;
+    		return altServer.serverType + " " + altServer.serverID;
+    	}
+    	return null;
     }
     
     
