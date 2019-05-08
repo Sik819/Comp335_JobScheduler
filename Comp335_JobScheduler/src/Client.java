@@ -9,13 +9,9 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Scanner;
 import java.io.BufferedReader;
-
+import java.util.*;
 public class Client {
-	
 	Socket socket =  null;
 	
 	//job
@@ -24,6 +20,10 @@ public class Client {
     
     //server
     ArrayList<Server> listServer = new ArrayList<>();
+    HashMap<String,Server[]> newListServer = new HashMap<>();
+    
+    //store initial server state
+    ArrayList<Server> initServer = new ArrayList<>();
     
     //get the largest server
     public String getLargest()
@@ -32,48 +32,79 @@ public class Client {
     }
     
     //get firsFit
-    public String WorstFit()
+    public String getFirstFit()
     {
-    	int worstFit = 0;
-    	Server worstServer = null;
-    	int altFit = 0;
-    	Server altServer = null;
-    	int fitVal = 0;
-    	for(int i = 0; i < listServer.size(); i++) {
-    		fitVal = listServer.get(i).core - currentJob.core;
-    		if(fitVal > 0) {
-    			if(listServer.get(i).compareJob(currentJob) && ((listServer.get(i).state == 3 && listServer.get(i).avbTime == -1) || listServer.get(i).state == 2)) {
-    			
-    				if(worstFit < fitVal) {
-    					worstFit = fitVal;
-    					worstServer = listServer.get(i);
-    				}
-    			}
-    			if(listServer.get(i).compareJob(currentJob) && altFit < fitVal) {
-    				altFit = fitVal;
-    				altServer = listServer.get(i);
-    			}
+    	//using resc all
+    	Server temp = null;
+    	boolean firstServer = true;
+    	for(Server ser : listServer)
+    	{
+    		if(ser.compareJob(currentJob))
+    		{
+//    			if(firstServer)
+//    			{
+//    				temp = ser;
+//    				firstServer = false;
+//    			}
+//    			
+//    			String sType = temp.serverType;
+//
+//    			if(ser.serverType == sType && ser.state == 2)
+    			return ser.serverType+" "+ser.serverID;
     		}
-    		
     	}
-    	if(worstServer != null) {
-    		worstFit = 0;
-    		altFit = 0;
-    		return worstServer.serverType + " " + worstServer.serverID;
-    	}
-    	if(altServer != null) {
-    		worstFit = 0;
-    		altFit = 0;
-    		return altServer.serverType + " " + altServer.serverID;
-    	}
-    	return null;
+ 
+    	//first active server
+    	temp = getInitServer();
+    	
+    	return temp.serverType+" "+temp.serverID;
     }
     
     
+    public String WorstFit()
+    {
+    	int worstFit = -1;
+    	Server worstServer = null;
+    	int altFit = -1;
+    	Server altServer = null;
+    	int fitVal = 0;
+    	for(int i = 0; i < listServer.size(); i++) 
+    	{
+    		fitVal = listServer.get(i).core - currentJob.core;
+    		if(listServer.get(i).compareJob(currentJob) && ((listServer.get(i).state == 3 && listServer.get(i).avbTime == -1) || listServer.get(i).state == 2)) 
+    		{
+    				if(worstFit < fitVal) 
+    				{
+    					worstFit = fitVal;
+    					worstServer = listServer.get(i);
+    				}
+    		}
+    		if(listServer.get(i).compareJob(currentJob) && altFit < fitVal) 
+    		{
+    				altFit = fitVal;
+    				altServer = listServer.get(i);
+    		}
+    	}
+    	if(worstServer != null) {
+    		worstFit = -1;
+    		altFit = -1;
+    		return worstServer.serverType + " " + worstServer.serverID;
+    	}
+    	else if (altServer == null)
+    	{
+    		return getInitServer().serverType + " " + getInitServer().serverID;
+    	}
+    	else
+    	{
+    		worstFit = -1;
+    		altFit = -1;
+    		return altServer.serverType + " " + altServer.serverID;
+    	}
+    	
+    }
+    
 
     //make byte array
-    
-    
     public byte[] sendToServer(String s)
     {
         String temp = s+"\n";
@@ -105,6 +136,7 @@ public class Client {
     	else if (useAlg == 1)
     		str = WorstFit();
     	pr.write(sendToServer("SCHD "+currentJob.jobID+" "+str));
+    	System.out.println(">>> "+currentJob.jobID+" SCHEDULED TO :"+str);
         if (readLine(s).contains("OK"))
         {
             currentJob.jobDone();
@@ -156,6 +188,33 @@ public class Client {
         }
     	
     }
+    
+    //get server initial state
+    public void getInitState(ArrayList<Server> list)
+    {
+    	String lookup = "";
+    	for(Server ser : list)
+    	{
+    		if(!lookup.contains(ser.serverType))
+    		{
+    			lookup+=ser.serverType;
+    			initServer.add(ser);
+    		}
+    	}
+    }
+    
+    //get init server
+    public Server getInitServer()
+    {
+    	for(Server ser : initServer)
+    	{
+    		if(ser.compareJob(currentJob))
+    		{
+    			return ser;
+    		}
+    	}
+    	return null;
+    }
 
     //constructor client
     
@@ -180,8 +239,12 @@ public class Client {
             String reply = readLine(socket);
         }
 
+        //send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
         send.write(sendToServer("RESC All"));
         okSender(send);  //get all servers
+        
+        //get init state at the very beginning
+        getInitState(listServer);
         
         //do the scheduling
         scheduleJob(send, socket, algNumber);
@@ -191,6 +254,7 @@ public class Client {
         	String str = readLine(socket);
         	if(str.contains("JOBN"))
         	{
+        		//send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
         		send.write(sendToServer("RESC All"));
         		okSender(send);
         		scheduleJob(send, socket, algNumber);
@@ -210,11 +274,18 @@ public class Client {
         
 }
     public static void main(String[] args) throws UnknownHostException, IOException {
-    	
+    	//alg values
+    	//	ff = 1
+    	//	bf = 2
+    	//	wf = 3
     	
     	Integer algorithm = null;
-    	if(args[0].contains("-a") && args[1].contains("wf"))
-    		algorithm = 1;
+    	if (args.length != 0)
+    	{
+    		if(args[0].contains("-a") && args[1].contains("wf"))
+        		algorithm = 1;
+    	}
+    	
 
         Client cl = new Client("127.0.0.1", 8096, algorithm);
 
