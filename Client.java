@@ -49,6 +49,14 @@ public class Client {
 //    			if(ser.serverType == sType && ser.state == 2)
     			return ser.serverType+" "+ser.serverID;
     		}
+    		
+    		//checking active
+    		if(ser.state ==3 && ser.compareJob(currentJob) && firstServer)
+    		{
+    			temp = ser;
+    			firstServer = false;
+    		}
+    			
     	}
     	
     	//first active server
@@ -56,7 +64,7 @@ public class Client {
     	//code hasnt been added since resc avail wont return anything with status 3
     	//may require changing later
     	
-    	return null;
+    	return temp.serverType+" "+temp.serverID;
     }
 
     //make byte array
@@ -167,7 +175,8 @@ public class Client {
             String reply = readLine(socket);
         }
 
-        send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
+        //send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
+        send.write(sendToServer("RESC All"));
         okSender(send);  //get all servers
         
         //do the scheduling
@@ -178,7 +187,8 @@ public class Client {
         	String str = readLine(socket);
         	if(str.contains("JOBN"))
         	{
-        		send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
+        		//send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
+        		send.write(sendToServer("RESC All"));
         		okSender(send);
         		scheduleJob(send, socket, algNumber);
         	}
