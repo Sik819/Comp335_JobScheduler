@@ -22,6 +22,9 @@ public class Client {
     ArrayList<Server> listServer = new ArrayList<>();
     HashMap<String,Server[]> newListServer = new HashMap<>();
     
+    //store initial server state
+    ArrayList<Server> initServer = new ArrayList<>();
+    
     //get the largest server
     public String getLargest()
     {
@@ -49,20 +52,10 @@ public class Client {
 //    			if(ser.serverType == sType && ser.state == 2)
     			return ser.serverType+" "+ser.serverID;
     		}
-    		
-    		//checking active
-    		if(ser.state ==3 && ser.compareJob(currentJob) && firstServer)
-    		{
-    			temp = ser;
-    			firstServer = false;
-    		}
-    			
     	}
-    	
+ 
     	//first active server
-    	
-    	//code hasnt been added since resc avail wont return anything with status 3
-    	//may require changing later
+    	temp = getInitServer();
     	
     	return temp.serverType+" "+temp.serverID;
     }
@@ -151,6 +144,33 @@ public class Client {
         }
     	
     }
+    
+    //get server initial state
+    public void getInitState(ArrayList<Server> list)
+    {
+    	String lookup = "";
+    	for(Server ser : list)
+    	{
+    		if(!lookup.contains(ser.serverType))
+    		{
+    			lookup+=ser.serverType;
+    			initServer.add(ser);
+    		}
+    	}
+    }
+    
+    //get init server
+    public Server getInitServer()
+    {
+    	for(Server ser : initServer)
+    	{
+    		if(ser.compareJob(currentJob))
+    		{
+    			return ser;
+    		}
+    	}
+    	return null;
+    }
 
     //constructor client
     
@@ -178,6 +198,9 @@ public class Client {
         //send.write(sendToServer("RESC Avail "+currentJob.getJobRESC()));
         send.write(sendToServer("RESC All"));
         okSender(send);  //get all servers
+        
+        //get init state at the very beginning
+        getInitState(listServer);
         
         //do the scheduling
         scheduleJob(send, socket, algNumber);
