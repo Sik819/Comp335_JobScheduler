@@ -52,8 +52,11 @@ public class Client {
 
                 }
         }}
-            if(bestServer!=null)
-            return bestServer.serverType + " " + bestServer.serverID;
+            if(bestServer!=null) {
+             bestFit = Integer.MAX_VALUE;
+             minAvail = Integer.MAX_VALUE;
+                return bestServer.serverType + " " + bestServer.serverID;
+            }
             else {
                 bestServer = getInitServer();
                 if(bestServer!=null)
@@ -62,7 +65,7 @@ public class Client {
                     return null;
             }
     }
-
+    
 
 
 
