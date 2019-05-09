@@ -90,6 +90,7 @@ public class Client {
     //get worst fit
     public String worstFit()
     {
+    	//Collections.sort(listServer, new CompareByCore());;
     	int worstFit = -1;
     	Server worstServer = null;
     	int altFit = -1;
@@ -236,14 +237,15 @@ public class Client {
     //get init server
     public Server getInitServer()
     {
+    	Server temp = new Server();
     	for(Server ser : initServer)
     	{
     		if(ser.compareJob(currentJob))
     		{
-    			return ser;
+    			temp = ser;
     		}
     	}
-    	return null;
+    	return temp;
     }
 
     //constructor client
