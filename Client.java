@@ -59,6 +59,76 @@ public class Client {
     	
     	return temp.serverType+" "+temp.serverID;
     }
+    
+    //get bestfit
+    public String getBestFit() {
+        int bestFit = Integer.MAX_VALUE;
+        Server bestServer = null;
+        int minAvail = Integer.MAX_VALUE;
+        for (int i = 0; i < listServer.size(); i++) {
+            Server thisServer = listServer.get(i);
+            if (thisServer.compareJob(currentJob)) {
+                int fitVal = thisServer.core - currentJob.core;
+                if (fitVal < bestFit || (fitVal == bestFit && thisServer.avbTime < minAvail)) {
+
+                    bestFit = fitVal;
+                    bestServer = thisServer;
+                    minAvail = bestServer.avbTime;
+
+                }
+            }
+        }
+        if (bestServer != null) {
+            bestFit = Integer.MAX_VALUE;
+            minAvail = Integer.MAX_VALUE;
+            return bestServer.serverType + " " + bestServer.serverID;
+        } else {
+            return getInitServer().serverType + " " + getInitServer().serverID;
+        }
+    }
+    
+    //get worst fit
+    public String worstFit()
+    {
+    	int worstFit = -1;
+    	Server worstServer = null;
+    	int altFit = -1;
+    	Server altServer = null;
+    	int fitVal = 0;
+    	for(int i = 0; i < listServer.size(); i++) 
+    	{
+    		fitVal = listServer.get(i).core - currentJob.core;
+    		if(listServer.get(i).compareJob(currentJob) && ((listServer.get(i).state == 3 && listServer.get(i).avbTime == -1) || listServer.get(i).state == 2)) 
+    		{
+    				if(worstFit < fitVal) 
+    				{
+    					worstFit = fitVal;
+    					worstServer = listServer.get(i);
+    				}
+    		}
+    		if(listServer.get(i).compareJob(currentJob) && altFit < fitVal) 
+    		{
+    				altFit = fitVal;
+    				altServer = listServer.get(i);
+    		}
+    	}
+    	if(worstServer != null) {
+    		worstFit = -1;
+    		altFit = -1;
+    		return worstServer.serverType + " " + worstServer.serverID;
+    	}
+    	else if (altServer == null)
+    	{
+    		return getInitServer().serverType + " " + getInitServer().serverID;
+    	}
+    	else
+    	{
+    		worstFit = -1;
+    		altFit = -1;
+    		return altServer.serverType + " " + altServer.serverID;
+    	}
+    	
+    }
 
     //make byte array
     public byte[] sendToServer(String s)
@@ -87,10 +157,14 @@ public class Client {
     public void scheduleJob(PrintStream pr, Socket s, Integer useAlg) throws UnsupportedEncodingException, IOException //add parser par
     {
     	String str = null;
-    	if (useAlg == null || useAlg != 1) //null or not ff
+    	if (useAlg == null) //null or not ff
     		str = listServer.get(listServer.size()-1).serverType+" 0"; //scheduling to the largest
     	else if (useAlg == 1)
     		str = getFirstFit();
+        else if (useAlg == 2)
+            str = getBestFit();
+        else if (useAlg == 3)
+            str = worstFit();
     	pr.write(sendToServer("SCHD "+currentJob.jobID+" "+str));
     	System.out.println(">>> "+currentJob.jobID+" SCHEDULED TO :"+str);
         if (readLine(s).contains("OK"))
@@ -238,8 +312,14 @@ public class Client {
     	Integer algorithm = null;
     	if (args.length != 0)
     	{
-    		if(args[0].contains("-a") && args[1].contains("ff"))
-        		algorithm = 1;
+            if(args[0].contains("-a") && args[1].contains("ff"))
+                algorithm = 1;
+            else if(args[0].contains("-a") && args[1].contains("bf"))
+            {
+            	algorithm = 2;
+            }
+            if(args[0].contains("-a") && args[1].contains("wf"))
+                algorithm = 3;
     	}
     	
 
