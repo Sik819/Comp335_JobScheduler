@@ -44,6 +44,8 @@ public class Client {
             Server thisServer = listServer.get(i);
             fitVal = thisServer.core - currentJob.core;
 
+            if(listServer.get(i).compareJob(currentJob))
+            {
             if(listServer.get(i).compareJob(currentJob) && ((listServer.get(i).state == 3 && listServer.get(i).avbTime == -1) || listServer.get(i).state == 2)) {
                 if (fitVal < bestFit || (fitVal == bestFit && thisServer.avbTime < minAvail)) {
 
@@ -53,7 +55,7 @@ public class Client {
 
                 }
             }
-        }
+        }}
             if(bestServer!=null)
             return bestServer.serverType + " " + bestServer.serverID;
             else {
@@ -64,6 +66,8 @@ public class Client {
                     return null;
             }
     }
+
+ 
 
 
     public void getInitState(ArrayList<Server> list)
