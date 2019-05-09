@@ -39,14 +39,11 @@ public class Client {
         int bestFit = Integer.MAX_VALUE;
         Server bestServer = null;
         int minAvail = Integer.MAX_VALUE;
-        int fitVal = 0;
         for(int i = 0; i < listServer.size(); i++) {
             Server thisServer = listServer.get(i);
-            fitVal = thisServer.core - currentJob.core;
-
-            if(listServer.get(i).compareJob(currentJob))
+            if(thisServer.compareJob(currentJob))
             {
-            if(listServer.get(i).compareJob(currentJob) && ((listServer.get(i).state == 3 && listServer.get(i).avbTime == -1) || listServer.get(i).state == 2)) {
+                int fitVal = thisServer.core - currentJob.core;
                 if (fitVal < bestFit || (fitVal == bestFit && thisServer.avbTime < minAvail)) {
 
                     bestFit = fitVal;
@@ -54,7 +51,6 @@ public class Client {
                     minAvail = bestServer.avbTime;
 
                 }
-            }
         }}
             if(bestServer!=null)
             return bestServer.serverType + " " + bestServer.serverID;
@@ -67,7 +63,7 @@ public class Client {
             }
     }
 
- 
+
 
 
     public void getInitState(ArrayList<Server> list)
